@@ -2,60 +2,66 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Outil d'accessibilité pour devs de jeux vidéo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recommandations d'accessibilité 🎮</title>
   <style>
-    body { font-family: sans-serif; margin: 40px; background: #f5f5f5; }
+    body { font-family: Arial, sans-serif; margin: 40px; background: #fafafa; }
     h1 { color: #333; }
-    .feature-list { margin-bottom: 20px; }
-    .recommendations { background: white; padding: 20px; border-radius: 10px; }
-    button { background: #0078D7; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
-    button:hover { background: #005ea6; }
+    .feature-list { margin-top: 20px; }
+    .feature { margin: 8px 0; }
+    button { margin-top: 20px; padding: 10px 20px; background-color: #0078d4; color: white; border: none; cursor: pointer; border-radius: 6px; }
+    button:hover { background-color: #005fa3; }
+    #results { margin-top: 30px; background: white; padding: 15px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
-  <h1>Assistant d'accessibilité 🎮</h1>
 
-  <div class="feature-list" id="feature-list">
-    <p>Chargement des features de gameplay...</p>
-  </div>
+  <h1>Recommandations d'accessibilité 🎮</h1>
+  <p>Choisis les features de gameplay présentes dans ton jeu :</p>
+
+  <div id="features" class="feature-list"></div>
 
   <button id="submit">Obtenir les recommandations</button>
 
-  <h2>Recommandations d'accessibilité :</h2>
-  <div class="recommendations" id="recommendations"></div>
+  <div id="results"></div>
 
   <script>
-    const API_URL = "http://127.0.0.1:8000";
+    const API_BASE = "https://accessibility-recommender.onrender.com"; // ton API Render
 
-    async function loadGameplayFeatures() {
-      const res = await fetch(`${API_URL}/gameplay-features`);
-      const data = await res.json();
-      const list = document.getElementById("feature-list");
-      list.innerHTML = "";
-      data.forEach(f => {
-        const item = document.createElement("div");
-        item.innerHTML = `<label><input type="checkbox" value="${f.id}"> ${f.name}</label>`;
-        list.appendChild(item);
+    async function loadFeatures() {
+      const res = await fetch(`${API_BASE}/gameplay-features`);
+      const features = await res.json();
+      const container = document.getElementById("features");
+
+      features.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "feature";
+        div.innerHTML = `<label><input type="checkbox" value="${f.id}"> ${f.name}</label>`;
+        container.appendChild(div);
       });
     }
 
-    async function getRecommendations() {
-      const selected = Array.from(document.querySelectorAll("input[type=checkbox]:checked")).map(cb => parseInt(cb.value));
-      const res = await fetch(`${API_URL}/recommendations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selected)
-      });
-      const data = await res.json();
-      const container = document.getElementById("recommendations");
-      container.innerHTML = data.recommendations.length
-        ? "<ul>" + data.recommendations.map(r => `<li>${r}</li>`).join("") + "</ul>"
-        : "<p>Aucune recommandation pour cette configuration.</p>";
+    async function getRecommendations(selectedIds) {
+      // ⚠️ Pour le moment, ton API n’a pas encore de vraie route “recommandations”.
+      // On simulera le comportement ici en attendant.
+      const recommendations = [];
+      if (selectedIds.includes(1)) recommendations.push("💬 Ajouter des sous-titres");
+      if (selectedIds.includes(2)) recommendations.push("⚙️ Permettre de basculer entre maintien et toggle");
+      return recommendations;
     }
 
-    document.getElementById("submit").addEventListener("click", getRecommendations);
+    document.getElementById("submit").addEventListener("click", async () => {
+      const checked = [...document.querySelectorAll("input[type=checkbox]:checked")];
+      const selectedIds = checked.map(c => parseInt(c.value));
+      const recs = await getRecommendations(selectedIds);
 
-    loadGameplayFeatures();
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "<h3>Recommandations :</h3>" + 
+        (recs.length > 0 ? `<ul>${recs.map(r => `<li>${r}</li>`).join("")}</ul>` : "<p>Aucune recommandation spécifique.</p>");
+    });
+
+    loadFeatures();
   </script>
+
 </body>
 </html>
